@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.core.handlers.wsgi import WSGIRequest
 from requests import get
 from django.core.cache import cache
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 BREAKING_BAD_API_BASE_URL = 'https://www.breakingbadapi.com/api/'
 
@@ -28,12 +29,18 @@ def characters(request: WSGIRequest):
     names = parse_names(names_query)
 
     all_characters = {}
-    for name in names:
-        results = get_characters_from_api(name)
-        all_characters |= { # set union ops works with dict
-            character['char_id']:character for character in results
-            if character['char_id'] not in results
-            } 
+    with ThreadPoolExecutor() as executor:
+        futures = {executor.submit(get_characters_from_api, name):name for name in names}
+        for future in as_completed(futures):
+            name = futures[future]
+            try:
+                results = future.result()
+                all_characters |= {
+                    character['char_id']:character for character in results
+                    if character['char_id'] not in results
+                }
+            except Exception as exc:
+                print(f'{name} generated an exception: {exc}')
     
     return JsonResponse(sorted(all_characters.values(), key=lambda x: x['char_id']), status=200, safe=False)
     
