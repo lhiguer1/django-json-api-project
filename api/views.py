@@ -16,12 +16,16 @@ def parse_names(names_string):
     return list({name.strip() for name in names_string.split(',') if name})
 
 def characters(request: WSGIRequest):
-    names = parse_names(request.GET.get('names'))
+    names_query = request.GET.get('names')
+    if not names_query:
+        return JsonResponse({'error': "names parameter is required"}, status=400)
+
+    names = parse_names(names_query)
 
     all_characters = {}
     for name in names:
         results = get_characters_from_api(name)
-        all_characters |= {
+        all_characters |= { # set union ops works with dict
             character['char_id']:character for character in results
             if character['char_id'] not in results
             } 
