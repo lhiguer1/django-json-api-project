@@ -11,11 +11,13 @@ def ping(request: WSGIRequest):
     return JsonResponse({'success': True}, status=200)
 
 def get_characters_from_api(name) -> list:
-    characters = cache.get(name)
+    key = ''.join(name.split()) # all whitespace
+
+    characters = cache.get(key)
     if not characters:
         resp = get(BREAKING_BAD_API_BASE_URL+'characters', params={'name': name})
         characters = resp.json()
-        cache.set(name, characters, timeout=60*5)
+        cache.set(key, characters, timeout=60*5)
     return characters # list of characters
 
 def parse_names(names_string:str):
