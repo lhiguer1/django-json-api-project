@@ -1,7 +1,5 @@
-from cmath import exp
-import re
 from django.test import SimpleTestCase
-import json
+from . import views
 
 # Create your tests here.
 class APITestCase(SimpleTestCase):
@@ -41,3 +39,24 @@ class APITestCase(SimpleTestCase):
         
         for i in range(len(expected_response)):
             self.assertDictEqual(response_json[i], expected_response[i])
+
+class MiscTests(SimpleTestCase):
+    def testParseNamesUnique(self):
+        names = 'walt,tod,walt,henry schrader,walt'
+        expected_names = ['walt', 'tod', 'henry schrader']
+        parsed_names = views.parse_names(names)
+        self.assertCountEqual(expected_names, parsed_names)
+
+    def testParseNamesWhitespacesRemoved(self):
+        names = '    walt ,tod,,,walt,  henry,walt   '
+        expected_names = ['walt', 'tod', 'henry']
+
+        parsed_names = views.parse_names(names)
+        self.assertCountEqual(expected_names, parsed_names)
+
+    def testParseNamesLowercase(self):
+        names = 'WaLt,TOD,Henry Schrader'
+        expected_names = ['walt', 'tod', 'henry schrader']
+
+        parsed_names = views.parse_names(names)
+        self.assertCountEqual(expected_names, parsed_names)
