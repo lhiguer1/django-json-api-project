@@ -34,7 +34,7 @@ def characters(request: WSGIRequest):
         results = get_characters_from_api(name)
         all_characters |= { # set union ops works with dict
             character['char_id']:character for character in results
-            if character['char_id'] not in results
+            if character['char_id'] not in all_characters
             } 
     
     return JsonResponse(sorted(all_characters.values(), key=lambda x: x['char_id']), status=200, safe=False)
